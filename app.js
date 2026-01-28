@@ -126,8 +126,9 @@ const calendar = {
       0
     ).getDate();
 
-    // Add placeholder cells for days before the month starts
-    for (let i = 0; i < startWeekday; i++) {
+    // Add placeholder cells for days before the month starts (weekdays only)
+    const placeholdersNeeded = startWeekday >= 5 ? 0 : startWeekday;
+    for (let i = 0; i < placeholdersNeeded; i++) {
       const placeholder = document.createElement('div');
       placeholder.className = 'day-cell disabled';
       elements.calendarDays.appendChild(placeholder);
@@ -138,14 +139,28 @@ const calendar = {
       state.allSummary.filter(s => s.count === bestCount).map(s => s.date)
     );
 
-    // Render actual days
+    const today = utils.formatISODate(new Date());
+
+    // Render actual days (weekdays only)
     for (let day = 1; day <= daysInMonth; day++) {
-      const cell = this.createDayCell(day, bestDates, bestCount);
+      const dateObj = new Date(
+        state.currentMonth.getFullYear(),
+        state.currentMonth.getMonth(),
+        day
+      );
+      const dayOfWeek = dateObj.getDay();
+      
+      // Skip weekends (Saturday = 6, Sunday = 0)
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        continue;
+      }
+      
+      const cell = this.createDayCell(day, bestDates, bestCount, today);
       elements.calendarDays.appendChild(cell);
     }
   },
 
-  createDayCell(day, bestDates, bestCount) {
+  createDayCell(day, bestDates, bestCount, today) {
     const dateObj = new Date(
       state.currentMonth.getFullYear(),
       state.currentMonth.getMonth(),
@@ -161,6 +176,7 @@ const calendar = {
     const summaryItem = state.allSummary.find(s => s.date === iso);
     const count = summaryItem ? summaryItem.count : 0;
     const isBest = bestDates.has(iso) && count > 0;
+    const isToday = iso === today;
 
     // Apply cell classes
     if (summaryItem && summaryItem.users.some(u => u !== state.myName)) {
@@ -171,6 +187,9 @@ const calendar = {
     }
     if (isBest) {
       cell.classList.add('best-day');
+    }
+    if (isToday) {
+      cell.classList.add('today');
     }
 
     // Build cell content
@@ -193,38 +212,8 @@ const calendar = {
   createDayContent(mySelected, count) {
     const content = document.createElement('div');
     content.className = 'day-content';
-
-    const dots = this.createDots(mySelected, count);
-    const badge = this.createBadge(count);
-
-    content.appendChild(dots);
-    content.appendChild(badge);
+    // Dots and badges are hidden per UI requirements, so we don't create them
     return content;
-  },
-
-  createDots(mySelected, count) {
-    const dots = document.createElement('div');
-    dots.className = 'dot-row';
-
-    const myDot = document.createElement('div');
-    myDot.className = 'dot';
-    if (mySelected) myDot.classList.add('mine');
-    dots.appendChild(myDot);
-
-    if (count > (mySelected ? 1 : 0)) {
-      const othersDot = document.createElement('div');
-      othersDot.className = 'dot others';
-      dots.appendChild(othersDot);
-    }
-
-    return dots;
-  },
-
-  createBadge(count) {
-    const badge = document.createElement('div');
-    badge.className = 'day-badge';
-    badge.textContent = count === 0 ? '–' : `${count} going`;
-    return badge;
   },
 
   handleDayClick(iso) {
