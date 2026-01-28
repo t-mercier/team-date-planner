@@ -96,12 +96,12 @@
               most people.
             </div>
           </div>
-          <div class="tab-buttons">
-            <button class="tab-button active" data-tab="calendar">
+          <div class="tab-buttons" role="tablist">
+            <button class="tab-button active" data-tab="calendar" role="tab" aria-selected="true">
               Calendar
               <span id="tab-calendar-count">You</span>
             </button>
-            <button class="tab-button" data-tab="summary">
+            <button class="tab-button" data-tab="summary" role="tab" aria-selected="false">
               Best dates
               <span id="tab-summary-count">0</span>
             </button>
@@ -109,17 +109,17 @@
         </div>
 
         <div class="content">
-          <section class="calendar-card" data-tab-content="calendar">
+          <section class="calendar-card" data-tab-content="calendar" role="tabpanel">
             <div class="calendar-header">
-              <div class="calendar-month-label" id="month-label"></div>
+              <div class="calendar-month-label" id="month-label" aria-live="polite"></div>
               <div class="calendar-nav">
-                <button class="btn-icon" id="prev-month" title="Previous month">
+                <button class="btn-icon" id="prev-month" title="Previous month" aria-label="Previous month">
                   ◀
                 </button>
-                <button class="btn-icon" id="today-month" title="Jump to current month">
+                <button class="btn-icon" id="today-month" title="Jump to current month" aria-label="Jump to current month">
                   ●
                 </button>
-                <button class="btn-icon" id="next-month" title="Next month">
+                <button class="btn-icon" id="next-month" title="Next month" aria-label="Next month">
                   ▶
                 </button>
               </div>
@@ -159,6 +159,7 @@
           <section
             class="summary-card"
             data-tab-content="summary"
+            role="tabpanel"
             style="display: none"
           >
             <div class="summary-header">
