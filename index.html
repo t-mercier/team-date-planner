@@ -21,29 +21,27 @@
           <div class="panel-title">Your profile</div>
           <div class="name-input-row">
             <label for="name-input" class="hint"
-              >Enter the name your teammates will recognise.</label
+              >Select your name from the list.</label
             >
-            <input
-              id="name-input"
-              type="text"
-              placeholder="e.g. Alex, Sam, Maria…"
-              autocomplete="off"
-            />
+            <select id="name-input">
+              <option value="">Select your name...</option>
+              <option value="Arnaud de Vallois">Arnaud de Vallois</option>
+              <option value="Cristian Benghe">Cristian Benghe</option>
+              <option value="Cristina Dicillo">Cristina Dicillo</option>
+              <option value="Daniel Ribeiro Maciel">Daniel Ribeiro Maciel</option>
+              <option value="Gregory McCall">Gregory McCall</option>
+              <option value="Kwok-Po Chu">Kwok-Po Chu</option>
+              <option value="Leonardo Scandolo">Leonardo Scandolo</option>
+              <option value="Maarten Gribnau">Maarten Gribnau</option>
+              <option value="Matteo Mecucci">Matteo Mecucci</option>
+              <option value="Ruben Hamers">Ruben Hamers</option>
+              <option value="Timothée Mercier">Timothée Mercier</option>
+              <option value="William Deurwaarder">William Deurwaarder</option>
+            </select>
             <div class="hint">
               This stays
               <strong>on your computer only</strong>
               and is used to track your choices.
-            </div>
-          </div>
-          <div class="profile-picker">
-            <button id="toggle-profiles" class="profile-toggle">
-              Or pick your name from the list
-            </button>
-            <div id="profiles-panel" class="profiles-panel" style="display: none">
-              <div class="hint" style="margin-bottom: 4px">
-                Click your name to reuse your previous choices.
-              </div>
-              <div id="profiles-list" class="profiles-list"></div>
             </div>
           </div>
           <div id="name-error" class="error" style="display: none"></div>
