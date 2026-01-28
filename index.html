@@ -97,11 +97,11 @@
             </div>
           </div>
           <div class="tab-buttons" role="tablist">
-            <button class="tab-button active" data-tab="calendar" role="tab" aria-selected="true">
+            <button class="tab-button active" data-tab="calendar" role="tab" aria-selected="true" id="tab-calendar">
               Calendar
               <span id="tab-calendar-count">You</span>
             </button>
-            <button class="tab-button" data-tab="summary" role="tab" aria-selected="false">
+            <button class="tab-button" data-tab="summary" role="tab" aria-selected="false" id="tab-summary">
               Best dates
               <span id="tab-summary-count">0</span>
             </button>
@@ -109,7 +109,7 @@
         </div>
 
         <div class="content">
-          <section class="calendar-card" data-tab-content="calendar" role="tabpanel">
+          <section class="calendar-card" data-tab-content="calendar" role="tabpanel" aria-labelledby="tab-calendar">
             <div class="calendar-header">
               <div class="calendar-month-label" id="month-label" aria-live="polite"></div>
               <div class="calendar-nav">
@@ -160,6 +160,7 @@
             class="summary-card"
             data-tab-content="summary"
             role="tabpanel"
+            aria-labelledby="tab-summary"
             style="display: none"
           >
             <div class="summary-header">

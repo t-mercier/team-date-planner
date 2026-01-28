@@ -12,10 +12,10 @@ This refactoring effort focused on improving code organization, reducing duplica
   - No separation of concerns
 
 ### After
-- **3 separate, focused files** (1,478 lines total)
-  - `index.html` (180 lines) - Clean semantic HTML
-  - `styles.css` (800 lines) - Organized, modular CSS with variables
-  - `app.js` (498 lines) - Modular JavaScript with clear sections
+- **3 separate, focused files** (1,492 lines total)
+  - `index.html` (182 lines) - Clean semantic HTML
+  - `styles.css` (811 lines) - Organized, modular CSS with variables
+  - `app.js` (499 lines) - Modular JavaScript with clear sections
 
 ## JavaScript Improvements
 
