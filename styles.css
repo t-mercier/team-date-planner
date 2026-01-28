@@ -293,7 +293,7 @@ body {
 
 .calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-bottom: 1px solid var(--border);
   background: #f2f2f7;
 }
@@ -310,7 +310,7 @@ body {
 
 .calendar-days {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .day-cell {
@@ -324,7 +324,7 @@ body {
   transition: all 0.12s ease;
 }
 
-.day-cell:nth-child(7n) {
+.day-cell:nth-child(5n) {
   border-right: none;
 }
 
@@ -348,7 +348,7 @@ body {
 }
 
 .dot-row {
-  display: flex;
+  display: none; /* Hidden per UI requirements */
   gap: 3px;
 }
 
@@ -369,6 +369,7 @@ body {
 }
 
 .day-badge {
+  display: none; /* Hidden per UI requirements */
   font-size: 9px;
   padding: 1px 5px;
   border-radius: var(--radius-full);
@@ -397,7 +398,6 @@ body {
 .day-cell.selected {
   background: var(--accent-soft);
   box-shadow: var(--shadow-focus);
-  border-color: rgba(0, 122, 255, 0.6);
 }
 
 .day-cell.selected .day-number {
@@ -406,7 +406,18 @@ body {
 
 .day-cell.has-others:not(.selected) {
   background: rgba(52, 199, 89, 0.12);
-  border-color: rgba(52, 199, 89, 0.55);
+}
+
+.day-cell.today::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  z-index: 3;
 }
 
 .day-cell.best-day {
