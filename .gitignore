@@ -35,4 +35,4 @@ Thumbs.db
 # App runtime data
 availability.json
 
-
+*.md
