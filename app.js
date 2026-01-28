@@ -423,8 +423,10 @@ const nameManager = {
     elements.nameButtons.forEach(button => {
       if (button.dataset.name === firstName) {
         button.classList.add('active');
+        button.setAttribute('aria-checked', 'true');
       } else {
         button.classList.remove('active');
+        button.setAttribute('aria-checked', 'false');
       }
     });
   }
