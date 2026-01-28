@@ -154,7 +154,8 @@ body {
   gap: var(--space-xs);
 }
 
-input[type='text'] {
+input[type='text'],
+select {
   width: 100%;
   padding: var(--space-sm) 10px;
   border-radius: var(--radius-full);
@@ -166,10 +167,29 @@ input[type='text'] {
   transition: all 0.15s ease;
 }
 
-input[type='text']:focus {
+input[type='text']:focus,
+select:focus {
   border-color: var(--accent);
   box-shadow: var(--shadow-focus);
   transform: translateY(-0.5px);
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3e%3cpolyline points="6 9 12 15 18 9"%3e%3c/polyline%3e%3c/svg%3e');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
+
+select:hover {
+  border-color: var(--accent);
+}
+
+select option {
+  padding: 8px;
 }
 
 .hint {

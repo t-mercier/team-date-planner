@@ -14,10 +14,7 @@ const elements = {
   summaryList: document.getElementById('summary-list'),
   tabButtons: Array.from(document.querySelectorAll('.tab-button')),
   tabCalendarCount: document.getElementById('tab-calendar-count'),
-  tabSummaryCount: document.getElementById('tab-summary-count'),
-  toggleProfilesBtn: document.getElementById('toggle-profiles'),
-  profilesPanel: document.getElementById('profiles-panel'),
-  profilesList: document.getElementById('profiles-list')
+  tabSummaryCount: document.getElementById('tab-summary-count')
 };
 
 // ===== Application State =====
@@ -25,8 +22,7 @@ const state = {
   currentMonth: new Date(),
   mySelectedDates: new Set(),
   allSummary: [],
-  myName: '',
-  knownProfiles: []
+  myName: ''
 };
 state.currentMonth.setDate(1);
 
@@ -218,7 +214,7 @@ const calendar = {
 
   handleDayClick(iso) {
     if (!state.myName) {
-      ui.showError('Please enter your name before selecting dates.');
+      ui.showError('Please select your name before selecting dates.');
       return;
     }
 
@@ -307,59 +303,7 @@ const summary = {
   }
 };
 
-// ===== Profiles Management =====
-const profiles = {
-  async load() {
-    try {
-      const users = await api.getAllUsers();
-      state.knownProfiles = users || [];
-      this.render();
-    } catch (err) {
-      console.error('Error loading profiles:', err);
-    }
-  },
 
-  render() {
-    elements.profilesList.innerHTML = '';
-    
-    if (!state.knownProfiles.length) {
-      elements.profilesList.innerHTML = 
-        '<div class="hint">No saved profiles yet. Once teammates save their availability, their names will appear here.</div>';
-      return;
-    }
-
-    state.knownProfiles.forEach(name => {
-      const pill = this.createProfilePill(name);
-      elements.profilesList.appendChild(pill);
-    });
-  },
-
-  createProfilePill(name) {
-    const pill = document.createElement('button');
-    pill.type = 'button';
-    pill.className = 'profile-pill';
-    pill.textContent = name;
-    pill.addEventListener('click', async () => {
-      await this.selectProfile(name);
-    });
-    return pill;
-  },
-
-  async selectProfile(name) {
-    state.myName = name;
-    elements.nameInput.value = name;
-    elements.tabCalendarCount.textContent = name;
-    localStorage.setItem('team-date-planner:name', name);
-    ui.hideError();
-    await data.loadForName();
-    elements.profilesPanel.style.display = 'none';
-  },
-
-  togglePanel() {
-    const isOpen = elements.profilesPanel.style.display !== 'none';
-    elements.profilesPanel.style.display = isOpen ? 'none' : 'block';
-  }
-};
 
 // ===== Data Management =====
 const data = {
@@ -388,7 +332,7 @@ const data = {
 
   async save() {
     if (!state.myName) {
-      ui.showError('Please enter your name before saving.');
+      ui.showError('Please select your name before saving.');
       return;
     }
 
@@ -405,7 +349,6 @@ const data = {
       calendar.render();
       summary.render();
       ui.updateOthersCount();
-      await profiles.load();
     } catch (err) {
       console.error('Error saving:', err);
       ui.updateStatus('Error while saving. Check folder permissions.');
@@ -442,7 +385,7 @@ const nameManager = {
       elements.tabCalendarCount.textContent = state.myName;
     }
 
-    elements.nameInput.addEventListener('input', () => {
+    elements.nameInput.addEventListener('change', () => {
       const value = elements.nameInput.value.trim();
       state.myName = value;
       
@@ -451,6 +394,7 @@ const nameManager = {
       } else {
         elements.tabCalendarCount.textContent = value;
         localStorage.setItem('team-date-planner:name', value);
+        data.loadForName();
       }
       ui.hideError();
     });
@@ -459,8 +403,6 @@ const nameManager = {
 
 // ===== Event Listeners =====
 function setupEventListeners() {
-  elements.toggleProfilesBtn.addEventListener('click', () => profiles.togglePanel());
-  
   document.getElementById('prev-month').addEventListener('click', () => calendar.navigate('prev'));
   document.getElementById('next-month').addEventListener('click', () => calendar.navigate('next'));
   document.getElementById('today-month').addEventListener('click', () => calendar.navigate('today'));
@@ -490,8 +432,6 @@ async function bootstrap() {
       console.error('Error during initial load:', err);
     }
   }
-  
-  await profiles.load();
 }
 
 // Initialize the application
