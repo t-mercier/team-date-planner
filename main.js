@@ -5,7 +5,7 @@ const os = require('os'); // Ajoute en haut
 
 const DATA_FILE = path.join(
   os.homedir(), 
-  'OneDrive - TomTom International', 
+  'OneDrive - TomTom', 
   'VE-team-planner', 
   'availability.json'
 );
@@ -39,7 +39,10 @@ async function readData() {
 }
 
 async function writeData(data) {
+  console.log('💾 Saving to:', DATA_FILE);
+  console.log('📦 Data:', JSON.stringify(data, null, 2));
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  console.log('✅ Save complete!');
 }
 
 function createWindow() {
