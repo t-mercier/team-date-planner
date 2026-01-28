@@ -127,7 +127,7 @@ const calendar = {
     ).getDate();
 
     // Add placeholder cells for days before the month starts (weekdays only)
-    const placeholdersNeeded = startWeekday > 5 ? 0 : startWeekday;
+    const placeholdersNeeded = startWeekday >= 5 ? 0 : startWeekday;
     for (let i = 0; i < placeholdersNeeded; i++) {
       const placeholder = document.createElement('div');
       placeholder.className = 'day-cell disabled';
@@ -212,38 +212,8 @@ const calendar = {
   createDayContent(mySelected, count) {
     const content = document.createElement('div');
     content.className = 'day-content';
-
-    const dots = this.createDots(mySelected, count);
-    const badge = this.createBadge(count);
-
-    content.appendChild(dots);
-    content.appendChild(badge);
+    // Dots and badges are hidden per UI requirements, so we don't create them
     return content;
-  },
-
-  createDots(mySelected, count) {
-    const dots = document.createElement('div');
-    dots.className = 'dot-row';
-
-    const myDot = document.createElement('div');
-    myDot.className = 'dot';
-    if (mySelected) myDot.classList.add('mine');
-    dots.appendChild(myDot);
-
-    if (count > (mySelected ? 1 : 0)) {
-      const othersDot = document.createElement('div');
-      othersDot.className = 'dot others';
-      dots.appendChild(othersDot);
-    }
-
-    return dots;
-  },
-
-  createBadge(count) {
-    const badge = document.createElement('div');
-    badge.className = 'day-badge';
-    badge.textContent = count === 0 ? '–' : `${count} going`;
-    return badge;
   },
 
   handleDayClick(iso) {
