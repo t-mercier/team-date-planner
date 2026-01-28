@@ -385,7 +385,7 @@ const nameManager = {
       elements.tabCalendarCount.textContent = state.myName;
     }
 
-    elements.nameInput.addEventListener('change', () => {
+    elements.nameInput.addEventListener('change', async () => {
       const value = elements.nameInput.value.trim();
       state.myName = value;
       
@@ -394,7 +394,7 @@ const nameManager = {
       } else {
         elements.tabCalendarCount.textContent = value;
         localStorage.setItem('team-date-planner:name', value);
-        data.loadForName();
+        await data.loadForName();
       }
       ui.hideError();
     });
