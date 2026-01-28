@@ -1,9 +1,25 @@
 // Team Date Planner - Main Application
 const api = window.availabilityAPI;
 
+// ===== Name Mapping =====
+const nameMapping = {
+  'Arnaud': 'Arnaud de Vallois',
+  'Cristian': 'Cristian Benghe',
+  'Cristina': 'Cristina Dicillo',
+  'Daniel': 'Daniel Ribeiro Maciel',
+  'Gregory': 'Gregory McCall',
+  'Kwok-Po': 'Kwok-Po Chu',
+  'Leonardo': 'Leonardo Scandolo',
+  'Maarten': 'Maarten Gribnau',
+  'Matteo': 'Matteo Mecucci',
+  'Ruben': 'Ruben Hamers',
+  'Timothée': 'Timothée Mercier',
+  'William': 'William Deurwaarder'
+};
+
 // ===== DOM Elements =====
 const elements = {
-  nameInput: document.getElementById('name-input'),
+  nameButtons: Array.from(document.querySelectorAll('.name-button')),
   nameError: document.getElementById('name-error'),
   monthLabel: document.getElementById('month-label'),
   calendarDays: document.getElementById('calendar-days'),
@@ -78,7 +94,6 @@ const ui = {
   showError(message) {
     elements.nameError.style.display = 'block';
     elements.nameError.textContent = message;
-    elements.nameInput.focus();
   },
 
   hideError() {
@@ -381,22 +396,38 @@ const nameManager = {
     const stored = localStorage.getItem('team-date-planner:name');
     if (stored) {
       state.myName = stored;
-      elements.nameInput.value = state.myName;
-      elements.tabCalendarCount.textContent = state.myName;
+      this.highlightNameButton(stored);
+      elements.tabCalendarCount.textContent = stored;
     }
 
-    elements.nameInput.addEventListener('change', async () => {
-      const value = elements.nameInput.value.trim();
-      state.myName = value;
-      
-      if (!value) {
-        elements.tabCalendarCount.textContent = 'You';
-      } else {
-        elements.tabCalendarCount.textContent = value;
-        localStorage.setItem('team-date-planner:name', value);
+    elements.nameButtons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const firstName = button.dataset.name;
+        const fullName = nameMapping[firstName];
+        
+        state.myName = fullName;
+        elements.tabCalendarCount.textContent = fullName;
+        localStorage.setItem('team-date-planner:name', fullName);
+        
+        this.highlightNameButton(fullName);
         await data.loadForName();
+        ui.hideError();
+      });
+    });
+  },
+
+  highlightNameButton(fullName) {
+    // Find the first name from the full name
+    const firstName = Object.keys(nameMapping).find(key => nameMapping[key] === fullName);
+    
+    elements.nameButtons.forEach(button => {
+      if (button.dataset.name === firstName) {
+        button.classList.add('active');
+        button.setAttribute('aria-checked', 'true');
+      } else {
+        button.classList.remove('active');
+        button.setAttribute('aria-checked', 'false');
       }
-      ui.hideError();
     });
   }
 };
