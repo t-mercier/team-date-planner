@@ -1,0 +1,38 @@
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+
+# Build / distribution
+dist/
+build/
+out/
+*.log
+
+# Electron / cache
+.electron/
+.cache/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Editor / tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# App runtime data
+availability.json
+
+
