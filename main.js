@@ -1,13 +1,22 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
+const os = require('os');
 
-const DATA_FILE = path.join(__dirname, 'availability.json');
+const DATA_FILE = path.join(os.homedir(), 'OneDrive - TomTom International', 'VE-team-planner', 'availability.json');
 
 async function ensureDataFile() {
   try {
     await fs.access(DATA_FILE);
   } catch {
+    // Create directory if it doesn't exist
+    const dataDir = path.dirname(DATA_FILE);
+    try {
+      await fs.mkdir(dataDir, { recursive: true });
+    } catch (err) {
+      console.error('Error creating directory:', err);
+      throw new Error('OneDrive folder not synced or not accessible. Please ensure OneDrive is properly set up.');
+    }
     await fs.writeFile(DATA_FILE, JSON.stringify({}, null, 2), 'utf8');
   }
 }

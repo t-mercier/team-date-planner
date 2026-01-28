@@ -8,49 +8,24 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <div class="logo-badge">🍸</div>
-          <div class="app-title">
-            <div class="app-title-main">Team Date Planner</div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">Your profile</div>
-          <div class="name-input-row">
-            <label for="name-input" class="hint"
-              >Select your name from the list.</label
-            >
-            <select id="name-input">
-              <option value="">Select your name...</option>
-              <option value="Arnaud de Vallois">Arnaud de Vallois</option>
-              <option value="Cristian Benghe">Cristian Benghe</option>
-              <option value="Cristina Dicillo">Cristina Dicillo</option>
-              <option value="Daniel Ribeiro Maciel">Daniel Ribeiro Maciel</option>
-              <option value="Gregory McCall">Gregory McCall</option>
-              <option value="Kwok-Po Chu">Kwok-Po Chu</option>
-              <option value="Leonardo Scandolo">Leonardo Scandolo</option>
-              <option value="Maarten Gribnau">Maarten Gribnau</option>
-              <option value="Matteo Mecucci">Matteo Mecucci</option>
-              <option value="Ruben Hamers">Ruben Hamers</option>
-              <option value="Timothée Mercier">Timothée Mercier</option>
-              <option value="William Deurwaarder">William Deurwaarder</option>
-            </select>
-          </div>
-          <div id="name-error" class="error" style="display: none"></div>
-        </div>
+      <aside class="name-sidebar">
+        <button class="name-button" data-name="Arnaud">Arnaud</button>
+        <button class="name-button" data-name="Cristian">Cristian</button>
+        <button class="name-button" data-name="Cristina">Cristina</button>
+        <button class="name-button" data-name="Daniel">Daniel</button>
+        <button class="name-button" data-name="Gregory">Gregory</button>
+        <button class="name-button" data-name="Kwok-Po">Kwok-Po</button>
+        <button class="name-button" data-name="Leonardo">Leonardo</button>
+        <button class="name-button" data-name="Maarten">Maarten</button>
+        <button class="name-button" data-name="Matteo">Matteo</button>
+        <button class="name-button" data-name="Ruben">Ruben</button>
+        <button class="name-button" data-name="Timothée">Timothée</button>
+        <button class="name-button" data-name="William">William</button>
       </aside>
 
       <main class="main">
+        <div id="name-error" class="error" style="display: none"></div>
         <div class="top-bar">
-          <div class="top-bar-left">
-            <div class="top-title">Choose when you're free</div>
-            <div class="top-subtitle">
-              Click all dates that work for you. We'll highlight the dates with the
-              most people.
-            </div>
-          </div>
           <div class="tab-buttons" role="tablist">
             <button class="tab-button active" data-tab="calendar" role="tab" aria-selected="true" id="tab-calendar">
               Calendar
