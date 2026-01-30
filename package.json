@@ -2,9 +2,12 @@
   "name": "team-date-planner",
   "version": "1.0.0",
   "description": "Simple desktop app for teams to pick the best date for drinks/dinner.",
-  "main": "main.js",
+  "main": "main-electron.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win"
   },
   "keywords": [
     "electron",
@@ -12,10 +15,38 @@
     "team",
     "event-planner"
   ],
-  "author": "",
+  "author": "TomTom VE Team",
   "license": "ISC",
   "type": "commonjs",
+  "build": {
+    "appId": "com.tomtom.team-date-planner",
+    "productName": "Team Date Planner",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "files": [
+      "main-electron.js",
+      "preload.js",
+      "app.js",
+      "index.html",
+      "styles.css"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
   "devDependencies": {
-    "electron": "^40.0.0"
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0"
   }
 }

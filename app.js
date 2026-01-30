@@ -1,8 +1,8 @@
 // Team Date Planner - Main Application
 const api = window.availabilityAPI;
 
-// ===== Name Mapping =====
-const nameMapping = {
+// ===== Constants =====
+const NAME_MAPPING = {
   'Arnaud': 'Arnaud de Vallois',
   'Cristian': 'Cristian Benghe',
   'Cristina': 'Cristina Dicillo',
@@ -17,9 +17,11 @@ const nameMapping = {
   'William': 'William Deurwaarder'
 };
 
+const STORAGE_KEY = 'team-date-planner:name';
+
 // ===== DOM Elements =====
 const elements = {
-  nameButtons: Array.from(document.querySelectorAll('.name-button')),
+  nameButtons: document.querySelectorAll('.name-button'),
   nameError: document.getElementById('name-error'),
   monthLabel: document.getElementById('month-label'),
   calendarDays: document.getElementById('calendar-days'),
@@ -28,248 +30,192 @@ const elements = {
   selectionCount: document.getElementById('selection-count'),
   othersCount: document.getElementById('others-count'),
   summaryList: document.getElementById('summary-list'),
-  tabButtons: Array.from(document.querySelectorAll('.tab-button')),
+  tabButtons: document.querySelectorAll('.tab-button'),
   tabCalendarCount: document.getElementById('tab-calendar-count'),
-  tabSummaryCount: document.getElementById('tab-summary-count')
+  tabSummaryCount: document.getElementById('tab-summary-count'),
+  prevMonth: document.getElementById('prev-month'),
+  nextMonth: document.getElementById('next-month'),
+  todayMonth: document.getElementById('today-month')
 };
 
 // ===== Application State =====
 const state = {
-  currentMonth: new Date(),
+  currentMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   mySelectedDates: new Set(),
   allSummary: [],
   myName: ''
 };
-state.currentMonth.setDate(1);
 
 // ===== Utility Functions =====
-const utils = {
-  formatISODate(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  },
-
-  formatPrettyDate(iso) {
-    const [year, month, day] = iso.split('-').map(x => parseInt(x, 10));
-    const d = new Date(year, month - 1, day);
-    return d.toLocaleDateString(undefined, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short'
-    });
-  },
-
-  pluralize(count, singular, plural) {
-    return count === 1 ? singular : plural;
-  }
+const formatISODate = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
+const formatPrettyDate = (iso) => {
+  const [year, month, day] = iso.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short'
+  });
+};
+
+const pluralize = (count, singular, plural) => count === 1 ? singular : plural;
+
 // ===== UI Update Functions =====
-const ui = {
-  updateSelectionCount() {
-    const count = state.mySelectedDates.size;
-    elements.selectionCount.textContent = `${count} ${utils.pluralize(count, 'date', 'dates')} selected`;
-    elements.tabCalendarCount.textContent = state.myName || 'You';
-  },
+const updateSelectionCount = () => {
+  const count = state.mySelectedDates.size;
+  elements.selectionCount.textContent = `${count} ${pluralize(count, 'date', 'dates')} selected`;
+  elements.tabCalendarCount.textContent = state.myName || 'You';
+};
 
-  updateOthersCount() {
-    const uniqueUsers = new Set();
-    state.allSummary.forEach(item => {
-      item.users.forEach(u => {
-        if (u) uniqueUsers.add(u);
-      });
-    });
-    if (state.myName) uniqueUsers.delete(state.myName);
-    
-    const count = uniqueUsers.size;
-    elements.othersCount.textContent = `${count} ${utils.pluralize(count, 'teammate', 'teammates')} already picked dates`;
-  },
+const updateOthersCount = () => {
+  const uniqueUsers = new Set();
+  state.allSummary.forEach(({ users }) => users.forEach(u => u && uniqueUsers.add(u)));
+  if (state.myName) uniqueUsers.delete(state.myName);
+  
+  const count = uniqueUsers.size;
+  elements.othersCount.textContent = `${count} ${pluralize(count, 'teammate', 'teammates')} already picked dates`;
+};
 
-  updateStatus(message) {
-    elements.statusLabel.textContent = message;
-  },
+const updateStatus = (message) => {
+  elements.statusLabel.textContent = message;
+};
 
-  showError(message) {
-    elements.nameError.style.display = 'block';
-    elements.nameError.textContent = message;
-  },
+const showError = (message) => {
+  elements.nameError.style.display = 'block';
+  elements.nameError.textContent = message;
+};
 
-  hideError() {
-    elements.nameError.style.display = 'none';
-  }
+const hideError = () => {
+  elements.nameError.style.display = 'none';
 };
 
 // ===== Calendar Rendering =====
-const calendar = {
-  render() {
-    this.renderHeader();
-    this.renderDays();
-  },
+const renderCalendarHeader = () => {
+  elements.monthLabel.textContent = state.currentMonth.toLocaleDateString(undefined, {
+    month: 'long',
+    year: 'numeric'
+  });
+};
 
-  renderHeader() {
-    elements.monthLabel.textContent = state.currentMonth.toLocaleDateString(undefined, {
-      month: 'long',
-      year: 'numeric'
-    });
-  },
+const isWeekend = (dayOfWeek) => dayOfWeek === 0 || dayOfWeek === 6;
 
-  renderDays() {
-    elements.calendarDays.innerHTML = '';
+const createDayCell = (day, bestDates, today) => {
+  const dateObj = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth(), day);
+  const iso = formatISODate(dateObj);
+  
+  const cell = document.createElement('div');
+  cell.className = 'day-cell';
+  cell.dataset.date = iso;
 
-    const firstDay = new Date(state.currentMonth);
-    const startWeekday = (firstDay.getDay() + 6) % 7;
-    const daysInMonth = new Date(
-      state.currentMonth.getFullYear(),
-      state.currentMonth.getMonth() + 1,
-      0
-    ).getDate();
+  const mySelected = state.mySelectedDates.has(iso);
+  const summaryItem = state.allSummary.find(s => s.date === iso);
+  const count = summaryItem?.count || 0;
+  const isBest = bestDates.has(iso) && count > 0;
+  const isToday = iso === today;
 
-    // Add placeholder cells for days before the month starts (weekdays only)
-    const placeholdersNeeded = startWeekday >= 5 ? 0 : startWeekday;
-    for (let i = 0; i < placeholdersNeeded; i++) {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'day-cell disabled';
-      elements.calendarDays.appendChild(placeholder);
-    }
+  if (summaryItem?.users.some(u => u !== state.myName)) {
+    cell.classList.add('has-others');
+  }
+  if (mySelected) cell.classList.add('selected');
+  if (isBest) cell.classList.add('best-day');
+  if (isToday) cell.classList.add('today');
 
-    const bestCount = state.allSummary.length > 0 ? state.allSummary[0].count : 0;
-    const bestDates = new Set(
-      state.allSummary.filter(s => s.count === bestCount).map(s => s.date)
-    );
+  const dayNumber = document.createElement('div');
+  dayNumber.className = 'day-number';
+  dayNumber.textContent = day;
+  
+  const content = document.createElement('div');
+  content.className = 'day-content';
+  if (count > 0) {
+    content.textContent = count;
+  }
 
-    const today = utils.formatISODate(new Date());
+  cell.append(dayNumber, content);
+  cell.addEventListener('click', () => handleDayClick(iso));
 
-    // Render actual days (weekdays only)
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateObj = new Date(
-        state.currentMonth.getFullYear(),
-        state.currentMonth.getMonth(),
-        day
-      );
-      const dayOfWeek = dateObj.getDay();
-      
-      // Skip weekends (Saturday = 6, Sunday = 0)
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        continue;
-      }
-      
-      const cell = this.createDayCell(day, bestDates, bestCount, today);
-      elements.calendarDays.appendChild(cell);
-    }
-  },
+  return cell;
+};
 
-  createDayCell(day, bestDates, bestCount, today) {
-    const dateObj = new Date(
-      state.currentMonth.getFullYear(),
-      state.currentMonth.getMonth(),
-      day
-    );
-    const iso = utils.formatISODate(dateObj);
+const renderCalendar = () => {
+  renderCalendarHeader();
+  elements.calendarDays.innerHTML = '';
 
-    const cell = document.createElement('div');
-    cell.className = 'day-cell';
-    cell.dataset.date = iso;
+  const firstDay = new Date(state.currentMonth);
+  const startWeekday = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(
+    state.currentMonth.getFullYear(),
+    state.currentMonth.getMonth() + 1,
+    0
+  ).getDate();
 
-    const mySelected = state.mySelectedDates.has(iso);
-    const summaryItem = state.allSummary.find(s => s.date === iso);
-    const count = summaryItem ? summaryItem.count : 0;
-    const isBest = bestDates.has(iso) && count > 0;
-    const isToday = iso === today;
+  const placeholdersNeeded = startWeekday >= 5 ? 0 : startWeekday;
+  for (let i = 0; i < placeholdersNeeded; i++) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'day-cell disabled';
+    elements.calendarDays.appendChild(placeholder);
+  }
 
-    // Apply cell classes
-    if (summaryItem && summaryItem.users.some(u => u !== state.myName)) {
-      cell.classList.add('has-others');
-    }
-    if (mySelected) {
-      cell.classList.add('selected');
-    }
-    if (isBest) {
-      cell.classList.add('best-day');
-    }
-    if (isToday) {
-      cell.classList.add('today');
-    }
+  const bestCount = state.allSummary[0]?.count || 0;
+  const bestDates = new Set(
+    state.allSummary.filter(s => s.count === bestCount).map(s => s.date)
+  );
+  const today = formatISODate(new Date());
 
-    // Build cell content
-    cell.appendChild(this.createDayNumber(day));
-    cell.appendChild(this.createDayContent(mySelected, count));
-
-    // Add click handler
-    cell.addEventListener('click', () => this.handleDayClick(iso));
-
-    return cell;
-  },
-
-  createDayNumber(day) {
-    const dayNumber = document.createElement('div');
-    dayNumber.className = 'day-number';
-    dayNumber.textContent = day;
-    return dayNumber;
-  },
-
-  createDayContent(mySelected, count) {
-    const content = document.createElement('div');
-    content.className = 'day-content';
-    // Dots and badges are hidden per UI requirements, so we don't create them
-    return content;
-  },
-
-  handleDayClick(iso) {
-    if (!state.myName) {
-      ui.showError('Please select your name before selecting dates.');
-      return;
-    }
-
-    if (state.mySelectedDates.has(iso)) {
-      state.mySelectedDates.delete(iso);
-    } else {
-      state.mySelectedDates.add(iso);
-    }
-
-    ui.updateStatus('Not saved yet');
-    this.render();
-    ui.updateSelectionCount();
-  },
-
-  navigate(direction) {
-    if (direction === 'today') {
-      state.currentMonth = new Date();
-      state.currentMonth.setDate(1);
-    } else {
-      state.currentMonth.setMonth(state.currentMonth.getMonth() + (direction === 'next' ? 1 : -1));
-    }
-    this.render();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateObj = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth(), day);
+    if (isWeekend(dateObj.getDay())) continue;
+    
+    elements.calendarDays.appendChild(createDayCell(day, bestDates, today));
   }
 };
 
+const handleDayClick = (iso) => {
+  if (!state.myName) {
+    showError('Please select your name before selecting dates.');
+    return;
+  }
+
+  if (state.mySelectedDates.has(iso)) {
+    state.mySelectedDates.delete(iso);
+  } else {
+    state.mySelectedDates.add(iso);
+  }
+
+  updateStatus('Not saved yet');
+  renderCalendar();
+  updateSelectionCount();
+};
+
+const navigateMonth = (direction) => {
+  if (direction === 'today') {
+    state.currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  } else {
+    state.currentMonth.setMonth(state.currentMonth.getMonth() + (direction === 'next' ? 1 : -1));
+  }
+  renderCalendar();
+};
+
 // ===== Summary View =====
-const summary = {
-  render() {
-    elements.summaryList.innerHTML = '';
+const renderSummary = () => {
+  elements.summaryList.innerHTML = '';
 
-    if (!state.allSummary.length) {
-      this.renderEmpty();
-      return;
-    }
-
-    const bestCount = state.allSummary[0].count;
-    elements.tabSummaryCount.textContent = String(state.allSummary.length);
-
-    state.allSummary.forEach(item => {
-      const row = this.createSummaryRow(item, bestCount);
-      elements.summaryList.appendChild(row);
-    });
-  },
-
-  renderEmpty() {
+  if (!state.allSummary.length) {
     elements.summaryList.innerHTML = 
       '<div class="summary-empty">No availability saved yet. Ask your teammates to open the app and save their dates here.</div>';
     elements.tabSummaryCount.textContent = '0';
-  },
+    return;
+  }
 
-  createSummaryRow(item, bestCount) {
+  const bestCount = state.allSummary[0].count;
+  elements.tabSummaryCount.textContent = String(state.allSummary.length);
+
+  state.allSummary.forEach(item => {
     const row = document.createElement('div');
     row.className = 'summary-row';
     if (item.count === bestCount && item.count > 0) {
@@ -278,182 +224,146 @@ const summary = {
 
     const dateEl = document.createElement('div');
     dateEl.className = 'summary-date';
-    dateEl.textContent = utils.formatPrettyDate(item.date);
+    dateEl.textContent = formatPrettyDate(item.date);
 
-    const countEl = this.createCountElement(item.count);
+    const countEl = document.createElement('div');
+    countEl.className = 'summary-count';
+    const pill = document.createElement('div');
+    pill.className = 'summary-count-pill';
+    if (item.count >= 3) pill.classList.add('strong');
+    pill.textContent = `${item.count} ${pluralize(item.count, 'person', 'people')}`;
+    countEl.appendChild(pill);
     
     const usersEl = document.createElement('div');
     usersEl.className = 'summary-users';
     usersEl.textContent = item.users.join(', ');
 
-    row.appendChild(dateEl);
-    row.appendChild(countEl);
-    row.appendChild(usersEl);
-
-    return row;
-  },
-
-  createCountElement(count) {
-    const countEl = document.createElement('div');
-    countEl.className = 'summary-count';
-
-    const pill = document.createElement('div');
-    pill.className = 'summary-count-pill';
-    if (count >= 3) pill.classList.add('strong');
-    pill.textContent = `${count} ${utils.pluralize(count, 'person', 'people')}`;
-
-    countEl.appendChild(pill);
-    return countEl;
+    row.append(dateEl, countEl, usersEl);
+    elements.summaryList.appendChild(row);
+  });
+};// ===== Data Management =====
+const loadData = async () => {
+  if (!state.myName) return;
+  
+  try {
+    const [myDates, summaryData] = await Promise.all([
+      api.getUserAvailability(state.myName),
+      api.getSummary()
+    ]);
+    
+    state.mySelectedDates = new Set(myDates || []);
+    state.allSummary = summaryData || [];
+    
+    updateStatus('Loaded from shared calendar');
+    updateSelectionCount();
+    updateOthersCount();
+    renderCalendar();
+    renderSummary();
+  } catch (err) {
+    console.error('Error loading data:', err);
+    updateStatus('Could not load data (check file access).');
   }
 };
 
+const saveData = async () => {
+  if (!state.myName) {
+    showError('Please select your name before saving.');
+    return;
+  }
 
+  elements.saveBtn.disabled = true;
+  elements.saveBtn.textContent = 'Saving…';
+  hideError();
 
-// ===== Data Management =====
-const data = {
-  async loadForName() {
-    if (!state.myName) return;
+  try {
+    await api.saveUserAvailability(state.myName, Array.from(state.mySelectedDates));
+    const summaryData = await api.getSummary();
+    state.allSummary = summaryData || [];
     
-    try {
-      const [myDates, summaryData] = await Promise.all([
-        api.getUserAvailability(state.myName),
-        api.getSummary()
-      ]);
-      
-      state.mySelectedDates = new Set(myDates || []);
-      state.allSummary = summaryData || [];
-      
-      ui.updateStatus('Loaded from shared calendar');
-      ui.updateSelectionCount();
-      ui.updateOthersCount();
-      calendar.render();
-      summary.render();
-    } catch (err) {
-      console.error('Error loading data:', err);
-      ui.updateStatus('Could not load data (check file access).');
-    }
-  },
-
-  async save() {
-    if (!state.myName) {
-      ui.showError('Please select your name before saving.');
-      return;
-    }
-
-    elements.saveBtn.disabled = true;
-    elements.saveBtn.textContent = 'Saving…';
-    ui.hideError();
-
-    try {
-      await api.saveUserAvailability(state.myName, Array.from(state.mySelectedDates));
-      const summaryData = await api.getSummary();
-      state.allSummary = summaryData || [];
-      
-      ui.updateStatus('Saved to shared calendar ✓');
-      calendar.render();
-      summary.render();
-      ui.updateOthersCount();
-    } catch (err) {
-      console.error('Error saving:', err);
-      ui.updateStatus('Error while saving. Check folder permissions.');
-    } finally {
-      elements.saveBtn.disabled = false;
-      elements.saveBtn.textContent = 'Save my availability';
-    }
+    updateStatus('Saved to shared calendar ✓');
+    renderCalendar();
+    renderSummary();
+    updateOthersCount();
+  } catch (err) {
+    console.error('Error saving:', err);
+    updateStatus('Error while saving. Check folder permissions.');
+  } finally {
+    elements.saveBtn.disabled = false;
+    elements.saveBtn.textContent = 'Save my availability';
   }
 };
 
 // ===== Tab Management =====
-const tabs = {
-  switch(tab) {
-    elements.tabButtons.forEach(btn => {
-      const isActive = btn.dataset.tab === tab;
-      btn.classList.toggle('active', isActive);
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
+const switchTab = (tab) => {
+  elements.tabButtons.forEach(btn => {
+    const isActive = btn.dataset.tab === tab;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
 
-    document.querySelectorAll('[data-tab-content]').forEach(section => {
-      const show = section.getAttribute('data-tab-content') === tab;
-      section.style.display = show ? '' : 'none';
-    });
-  }
+  document.querySelectorAll('[data-tab-content]').forEach(section => {
+    section.style.display = section.getAttribute('data-tab-content') === tab ? '' : 'none';
+  });
 };
 
 // ===== Name Management =====
-const nameManager = {
-  init() {
-    const stored = localStorage.getItem('team-date-planner:name');
-    if (stored) {
-      state.myName = stored;
-      this.highlightNameButton(stored);
-      elements.tabCalendarCount.textContent = stored;
-    }
+const highlightNameButton = (fullName) => {
+  const firstName = Object.keys(NAME_MAPPING).find(key => NAME_MAPPING[key] === fullName);
+  
+  elements.nameButtons.forEach(button => {
+    const isActive = button.dataset.name === firstName;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-checked', String(isActive));
+  });
+};
 
-    elements.nameButtons.forEach(button => {
-      button.addEventListener('click', async () => {
-        const firstName = button.dataset.name;
-        const fullName = nameMapping[firstName];
-        
-        state.myName = fullName;
-        elements.tabCalendarCount.textContent = fullName;
-        localStorage.setItem('team-date-planner:name', fullName);
-        
-        this.highlightNameButton(fullName);
-        await data.loadForName();
-        ui.hideError();
-      });
-    });
-  },
+const initNameSelection = () => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    state.myName = stored;
+    highlightNameButton(stored);
+    elements.tabCalendarCount.textContent = stored;
+  }
 
-  highlightNameButton(fullName) {
-    // Find the first name from the full name
-    const firstName = Object.keys(nameMapping).find(key => nameMapping[key] === fullName);
-    
-    elements.nameButtons.forEach(button => {
-      if (button.dataset.name === firstName) {
-        button.classList.add('active');
-        button.setAttribute('aria-checked', 'true');
-      } else {
-        button.classList.remove('active');
-        button.setAttribute('aria-checked', 'false');
-      }
+  elements.nameButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      const firstName = button.dataset.name;
+      const fullName = NAME_MAPPING[firstName];
+      
+      state.myName = fullName;
+      elements.tabCalendarCount.textContent = fullName;
+      localStorage.setItem(STORAGE_KEY, fullName);
+      
+      highlightNameButton(fullName);
+      await loadData();
+      hideError();
     });
+  });
+};
+
+// ===== Event Listeners & Initialization =====
+const init = () => {
+  elements.prevMonth.addEventListener('click', () => navigateMonth('prev'));
+  elements.nextMonth.addEventListener('click', () => navigateMonth('next'));
+  elements.todayMonth.addEventListener('click', () => navigateMonth('today'));
+  elements.saveBtn.addEventListener('click', saveData);
+  elements.tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+  initNameSelection();
+  renderCalendar();
+  
+  if (state.myName) {
+    loadData();
+  } else {
+    api.getSummary()
+      .then(summaryData => {
+        state.allSummary = summaryData || [];
+        updateOthersCount();
+        renderCalendar();
+        renderSummary();
+      })
+      .catch(err => console.error('Error during initial load:', err));
   }
 };
 
-// ===== Event Listeners =====
-function setupEventListeners() {
-  document.getElementById('prev-month').addEventListener('click', () => calendar.navigate('prev'));
-  document.getElementById('next-month').addEventListener('click', () => calendar.navigate('next'));
-  document.getElementById('today-month').addEventListener('click', () => calendar.navigate('today'));
-  
-  elements.saveBtn.addEventListener('click', () => data.save());
-  
-  elements.tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => tabs.switch(btn.dataset.tab));
-  });
-}
-
-// ===== Application Bootstrap =====
-async function bootstrap() {
-  nameManager.init();
-  calendar.render();
-  
-  if (state.myName) {
-    await data.loadForName();
-  } else {
-    try {
-      const summaryData = await api.getSummary();
-      state.allSummary = summaryData || [];
-      ui.updateOthersCount();
-      calendar.render();
-      summary.render();
-    } catch (err) {
-      console.error('Error during initial load:', err);
-    }
-  }
-}
-
-// Initialize the application
-setupEventListeners();
-bootstrap();
+init();

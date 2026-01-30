@@ -1,34 +1,30 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
-const os = require('os'); // Ajoute en haut
+const os = require('os');
 
-const DATA_FILE = path.join(
-  os.homedir(), 
-  'OneDrive - TomTom', 
-  'VE-team-planner', 
-  'availability.json'
-);
+const DATA_FILE = path.join(os.homedir(), 'OneDrive - TomTom', 'VE-team-planner', 'availability.json');
 
-async function ensureDataFolder() {
+// ===== File System Helpers =====
+const ensureDataFolder = async () => {
   const folder = path.dirname(DATA_FILE);
   try {
     await fs.access(folder);
   } catch {
     await fs.mkdir(folder, { recursive: true });
   }
-}
+};
 
-async function ensureDataFile() {
+const ensureDataFile = async () => {
   await ensureDataFolder();
   try {
     await fs.access(DATA_FILE);
   } catch {
     await fs.writeFile(DATA_FILE, JSON.stringify({}, null, 2), 'utf8');
   }
-}
+};
 
-async function readData() {
+const readData = async () => {
   await ensureDataFile();
   const raw = await fs.readFile(DATA_FILE, 'utf8');
   try {
@@ -36,19 +32,20 @@ async function readData() {
   } catch {
     return {};
   }
-}
+};
 
-async function writeData(data) {
+const writeData = async (data) => {
   console.log('💾 Saving to:', DATA_FILE);
   console.log('📦 Data:', JSON.stringify(data, null, 2));
   await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
   console.log('✅ Save complete!');
-}
+};
 
-function createWindow() {
+// ===== Window Management =====
+const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 980,
+    height: 750,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -57,8 +54,9 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
-}
+};
 
+// ===== App Lifecycle =====
 app.whenReady().then(() => {
   createWindow();
 
@@ -75,31 +73,26 @@ app.on('window-all-closed', () => {
   }
 });
 
+// ===== IPC Handlers =====
 ipcMain.handle('get-user-availability', async (_event, userName) => {
   const data = await readData();
-  const result = [];
-  for (const [date, users] of Object.entries(data)) {
-    if (users[userName]) {
-      result.push(date);
-    }
-  }
-  return result;
+  return Object.entries(data)
+    .filter(([_, users]) => users[userName])
+    .map(([date]) => date);
 });
 
 ipcMain.handle('save-user-availability', async (_event, userName, dates) => {
   const data = await readData();
 
-  // Clear previous entries for this user
-  for (const [date, users] of Object.entries(data)) {
+  Object.entries(data).forEach(([date, users]) => {
     if (users[userName]) {
       delete users[userName];
+      if (Object.keys(users).length === 0) {
+        delete data[date];
+      }
     }
-    if (Object.keys(users).length === 0) {
-      delete data[date];
-    }
-  }
+  });
 
-  // Add new dates
   dates.forEach((date) => {
     if (!data[date]) data[date] = {};
     data[date][userName] = true;
@@ -117,10 +110,7 @@ ipcMain.handle('get-summary', async () => {
     users: Object.keys(users).sort(),
   }));
 
-  summary.sort((a, b) => {
-    if (b.count !== a.count) return b.count - a.count;
-    return a.date.localeCompare(b.date);
-  });
+  summary.sort((a, b) => b.count - a.count || a.date.localeCompare(b.date));
 
   return summary;
 });
@@ -129,18 +119,15 @@ ipcMain.handle('get-all-users', async () => {
   const data = await readData();
   const usersSet = new Set();
 
-  for (const users of Object.values(data)) {
-    for (const name of Object.keys(users)) {
+  Object.values(data).forEach(users => {
+    Object.keys(users).forEach(name => {
       if (name && typeof name === 'string') {
         usersSet.add(name);
       }
-    }
-  }
+    });
+  });
 
   return Array.from(usersSet).sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: 'base' })
   );
 });
-
-
-
